@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os/exec"
+	"regexp"
 )
 
 type Urls struct {
@@ -40,6 +41,9 @@ func (url Urls) readLastResults() string {
 
 // get name of failed steps
 func get_failed_steps(output string) {
+	failed_steps := regexp.MustCompile("step failed")
+	index_fail := failed_steps.FindAllStringIndex(output, -1)
+	fmt.Println(index_fail)
 }
 
 func main() {
