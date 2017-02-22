@@ -1,4 +1,4 @@
-package main
+package cocomero
 
 import (
 	"fmt"
