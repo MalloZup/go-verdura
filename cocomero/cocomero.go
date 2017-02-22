@@ -40,10 +40,17 @@ func (url Urls) readLastResults() string {
 }
 
 // get name of failed steps
-func get_failed_steps(output string) {
+func get_failed_steps(output string) (numFailed int, nameFailed []string) {
+	// rio_file">features/spacewalk_debug.feature:16</span><h3 id="scenario_442"><span class="keyword">Scenario:</span> <span class="val">Check that no scheduled events have failed on manager server</span></h3><ol><script>makeRed('scenario_442');</script><li id='features_spacewalk_debug_feature_17' class='
 	failed_steps := regexp.MustCompile("step failed")
-	index_fail := failed_steps.FindAllStringIndex(output, -1)
-	fmt.Println(index_fail)
+	indexes_fail := failed_steps.FindAllStringIndex(output, -1)
+
+	for _, index := range indexes_fail {
+		fmt.Println("\n=============================\n\n")
+		fmt.Println(output[index[0]-1000 : index[0]])
+	}
+	numFailed = len(indexes_fail)
+	return numFailed, nameFailed
 }
 
 func main() {
