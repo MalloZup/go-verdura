@@ -1,0 +1,11 @@
+{
+   "features_systemspage_feature_312": {
+	   "bug": "1017505"
+   }
+   "features_centos_salt_ssh_feature_52": {
+	   "bug": "1024066"
+   }
+   "features_centos_salt_ssh_feature_124": {
+	   "bug": "1024066"
+   }
+}

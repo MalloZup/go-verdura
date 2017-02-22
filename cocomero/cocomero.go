@@ -1,38 +1,104 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
+	"reflect"
 	"regexp"
 	"strings"
 )
 
-type Urls struct {
-	head         string
-	devel30      string
-	head_file    string
-	devel30_file string
+type urls struct {
+	head        string
+	devel30     string
+	headFile    string
+	devel30File string
 }
 
-var cucumber = Urls{"http://m226.mgr.suse.de/workspace/manager-Head-sumaform-cucumber/last.html",
+type report struct {
+	numFailed     int
+	nameFailed    []string
+	oldnumFailed  int
+	oldNameFailed []string
+}
+
+var cucumber = urls{"http://m226.mgr.suse.de/workspace/manager-Head-sumaform-cucumber/last.html",
 	"http://m226.mgr.suse.de/workspace/manager-3.0-sumaform30/last.html",
 	"last.html",
 	"last30.html"}
 
+var rep report
+
+//full diff
+func fulldifference(slice1 []string, slice2 []string) []string {
+	var diff []string
+
+	// Loop two times, first to find slice1 strings not in slice2,
+	// second loop to find slice2 strings not in slice1
+	for i := 0; i < 2; i++ {
+		for _, s1 := range slice1 {
+			found := false
+			for _, s2 := range slice2 {
+				if s1 == s2 {
+					found = true
+					break
+				}
+			}
+			// String not found. We add it to return slice
+			if !found {
+				diff = append(diff, s1)
+			}
+		}
+		// Swap the slices, only if it was the first loop
+		if i == 0 {
+			slice1, slice2 = slice2, slice1
+		}
+	}
+
+	return diff
+}
+
+// this function compare and return elements that differe from 2 slices
+// we need this for see if we have a regression
+
+func difference(slice1 []string, slice2 []string) []string {
+	var diff []string
+
+	// Loop only 1 time first to find slice1 strings not in slice2
+	for i := 0; i < 1; i++ {
+		for _, s1 := range slice1 {
+			found := false
+			for _, s2 := range slice2 {
+				if s1 == s2 {
+					found = true
+					break
+				}
+			}
+			// String not found. We add it to return slice
+			if !found {
+				diff = append(diff, s1)
+			}
+		}
+	}
+
+	return diff
+}
+
 // this function get the latest cucumber result
-func (url Urls) getHeadOutput() {
-	cmd := exec.Command("wget", url.head, "-O", url.head_file)
-	stdoutStderr, err := cmd.CombinedOutput()
+func (url urls) getHeadOutput() {
+	cmd := exec.Command("wget", url.devel30, "-O", url.headFile)
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%s\n", stdoutStderr)
 }
 
-func (url Urls) readLastResults() string {
-	data, err := ioutil.ReadFile(url.head_file)
+// just read the results.html and return a string
+func (url urls) readLastResults() string {
+	data, err := ioutil.ReadFile(url.headFile)
 	if err != nil {
 		panic(err)
 	}
@@ -40,22 +106,55 @@ func (url Urls) readLastResults() string {
 	return str
 }
 
-// get name of failed steps
-func get_failed_steps(output string) (numFailed int, nameFailed []string) {
-	// rio_file">features/spacewalk_debug.feature:16</span><h3 id="scenario_442"><span class="keyword">Scenario:</span> <span class="val">Check that no scheduled events have failed on manager server</span></h3><ol><script>makeRed('scenario_442');</script><li id='features_spacewalk_debug_feature_17' class='
-	failed_steps := regexp.MustCompile("step failed")
-	indexes_fail := failed_steps.FindAllStringIndex(output, -1)
-
-	for _, index := range indexes_fail {
-		fmt.Println("\n=============================\n\n")
-		fmt.Println(strings.Fields(strings.Split(output[index[0]-500:index[0]], "li id=")[1])[0])
+// get name and number of failed steps
+func (r *report) getFailedSteps(output string) {
+	var nameFailed []string
+	failedSteps := regexp.MustCompile("step failed")
+	indexesFail := failedSteps.FindAllStringIndex(output, -1)
+	for _, index := range indexesFail {
+		nameFailed = append(nameFailed, strings.Replace(strings.Fields(strings.Split(output[index[0]-500:index[0]], "li id=")[1])[0], "'", "", -1))
 	}
-	numFailed = len(indexes_fail)
-	return numFailed, nameFailed
+	r.numFailed = len(indexesFail)
+	r.nameFailed = nameFailed
 }
 
+// dump type report into json
+// this function ovveride knowfailures with new failures
+func (r *report) dumpReportJson() {
+	b, errj := json.Marshal(r.nameFailed)
+	if errj != nil {
+		log.Fatal(errj)
+	}
+	err := ioutil.WriteFile(".knowfailures.json", b, 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// read the json file
+func (r *report) readReportJson() {
+	raw, err := ioutil.ReadFile(".knowfailures.json")
+	// TODO: assuming we  have to check if file exist ! :)
+	// at the beginning it doesn't
+	if err != nil {
+		log.Fatal("read file fail json")
+	}
+	errj := json.Unmarshal(raw, &r.oldNameFailed)
+	if errj != nil {
+		log.Fatal("unmarshal json failed!\n", errj)
+	}
+}
 func main() {
 	cucumber.getHeadOutput()
 	output := cucumber.readLastResults()
-	get_failed_steps(output)
+	rep.getFailedSteps(output)
+	rep.readReportJson()
+	rep.dumpReportJson()
+	// compare oldNameFailed and NameFailed
+	if reflect.DeepEqual(rep.oldNameFailed, rep.nameFailed) {
+		fmt.Println("no new errors")
+	} else {
+		fmt.Println("New regressions")
+		fmt.Println(difference(rep.nameFailed, rep.oldNameFailed))
+	}
 }
