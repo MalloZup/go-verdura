@@ -6,6 +6,7 @@ import (
 	"log"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 type Urls struct {
@@ -47,7 +48,7 @@ func get_failed_steps(output string) (numFailed int, nameFailed []string) {
 
 	for _, index := range indexes_fail {
 		fmt.Println("\n=============================\n\n")
-		fmt.Println(output[index[0]-1000 : index[0]])
+		fmt.Println(strings.Fields(strings.Split(output[index[0]-500:index[0]], "li id=")[1])[0])
 	}
 	numFailed = len(indexes_fail)
 	return numFailed, nameFailed
