@@ -92,12 +92,14 @@ func (url Urls) GetHeadOutput() {
 	cmd := exec.Command("wget", url.Head, "-O", url.HeadFile)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(url.Head)
+		panic(err)
+
 	}
 }
 
 // just read the results.html and return a string
-func (url Urls) readLastResults() string {
+func (url Urls) ReadLastResults() string {
 	data, err := ioutil.ReadFile(url.HeadFile)
 	if err != nil {
 		panic(err)
@@ -146,7 +148,7 @@ func (r *report) readReportJson() {
 }
 func main() {
 	cucumber.GetHeadOutput()
-	output := cucumber.readLastResults()
+	output := cucumber.ReadLastResults()
 	rep.getFailedSteps(output)
 	rep.readReportJson()
 	rep.dumpReportJson()

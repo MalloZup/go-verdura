@@ -7,5 +7,4 @@
 cocomero.go is a golang parser for analyzing cucumber output.html
 
 #### Tomate.go
-
-Quick-check test utilities
+Tutorial about Property testing,  Quick-check test utilities
