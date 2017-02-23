@@ -1,4 +1,4 @@
-package main
+package cocomero
 
 import (
 	"encoding/json"
@@ -89,7 +89,7 @@ func difference(slice1 []string, slice2 []string) []string {
 
 // this function get the latest cucumber result
 func (url urls) getHeadOutput() {
-	cmd := exec.Command("wget", url.devel30, "-O", url.headFile)
+	cmd := exec.Command("wget", url.head, "-O", url.headFile)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
