@@ -11,11 +11,11 @@ import (
 	"strings"
 )
 
-type urls struct {
-	head        string
-	devel30     string
-	headFile    string
-	devel30File string
+type Urls struct {
+	Head        string
+	Devel30     string
+	HeadFile    string
+	Devel30File string
 }
 
 type report struct {
@@ -25,7 +25,7 @@ type report struct {
 	oldNameFailed []string
 }
 
-var cucumber = urls{"http://m226.mgr.suse.de/workspace/manager-Head-sumaform-cucumber/last.html",
+var cucumber = Urls{"http://m226.mgr.suse.de/workspace/manager-Head-sumaform-cucumber/last.html",
 	"http://m226.mgr.suse.de/workspace/manager-3.0-sumaform30/last.html",
 	"last.html",
 	"last30.html"}
@@ -88,8 +88,8 @@ func difference(slice1 []string, slice2 []string) []string {
 }
 
 // this function get the latest cucumber result
-func (url urls) getHeadOutput() {
-	cmd := exec.Command("wget", url.head, "-O", url.headFile)
+func (url Urls) GetHeadOutput() {
+	cmd := exec.Command("wget", url.Head, "-O", url.HeadFile)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
@@ -97,8 +97,8 @@ func (url urls) getHeadOutput() {
 }
 
 // just read the results.html and return a string
-func (url urls) readLastResults() string {
-	data, err := ioutil.ReadFile(url.headFile)
+func (url Urls) readLastResults() string {
+	data, err := ioutil.ReadFile(url.HeadFile)
 	if err != nil {
 		panic(err)
 	}
@@ -145,7 +145,7 @@ func (r *report) readReportJson() {
 	}
 }
 func main() {
-	cucumber.getHeadOutput()
+	cucumber.GetHeadOutput()
 	output := cucumber.readLastResults()
 	rep.getFailedSteps(output)
 	rep.readReportJson()
