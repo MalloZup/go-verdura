@@ -1,6 +1,4 @@
-## Zenzero
-
-Zenzero explore BDD with ginkgo
+## Ginkgo
 
 https://github.com/onsi/ginkgo
 
