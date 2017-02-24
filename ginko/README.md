@@ -5,6 +5,8 @@ https://github.com/onsi/ginkgo
 ### How to run this example?
 
 ```console
+go get github.com/onsi/ginkgo/ginkgo  # installs the ginkgo CLI
+go get github.com/onsi/gomega         # fetches the matcher library
 
  ginkgo -v
 ```
